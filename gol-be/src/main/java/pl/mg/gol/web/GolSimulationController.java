@@ -4,7 +4,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import pl.mg.gol.domain.SimulationContext;
 import pl.mg.gol.service.GolSimulationRunner;
+import pl.mg.gol.service.SimulationAlreadyStartedException;
 
 import javax.validation.Valid;
 
@@ -19,7 +21,7 @@ public class GolSimulationController {
     }
 
     @PostMapping(value = "")
-    public ResponseEntity<Void> startSimulation(@Valid @RequestBody StartSimulationRequest dto) {
+    public ResponseEntity<Void> startSimulation(@Valid @RequestBody StartSimulationRequest dto) throws SimulationAlreadyStartedException {
         this.runner.startSimulation(mapper.mapToSimulationContext(dto));
         return ResponseEntity.ok().build();
     }
