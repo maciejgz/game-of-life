@@ -9,6 +9,8 @@ import pl.mg.gol.domain.SimulationContext;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,13 +33,54 @@ public class GolSimulationRunnerImpl implements GolSimulationRunner {
         validateSimulationContext(context);
         checkIfSimulationIsAlreadyStarted();
         Map<Position, Cell> board = generator.generateInitialMap(context.getSquareSize(), context.getElements());
-
-        while (simulationStarted) {
+        int simulationTurn = 1;
+        while (Boolean.TRUE.equals(simulationStarted)) {
+            log.debug("turn {} start living cells {}", simulationTurn, board.size());
             for (Position position : board.keySet()) {
-
+                /**
+                 * Each cell with one or no neighbors dies, as if by solitude.
+                 *
+                 * Each cell with four or more neighbors dies, as if by overpopulation.
+                 *
+                 * Each cell with two or three neighbors survives.
+                 * * */
+                //verify living cells
+                List<Cell> neighbours = findNeighbours(position, board);
+                board.get(position).calculateNextState(neighbours);
+                //verify their neighbours
+                for (Cell neighbour : neighbours) {
+                    List<Cell> secondLevelNeighbours = findNeighbours(neighbour.getPosition(), board);
+                    board.getOrDefault(neighbour.getPosition(), neighbour).calculateNextState(secondLevelNeighbours);
+                }
+            }
+            //propagate statuses to the living ones and remove dead cells
+            for (Cell cell : board.values()) {
+                cell.nextTurn();
+            }
+            //clear board
+            board.entrySet().removeIf(positionCellEntry -> !positionCellEntry.getValue().isStatus());
+            log.debug("simulation turn finished {} living cells", simulationTurn);
+            simulationTurn++;
+            if (board.isEmpty()) {
+                log.debug("all cells are dead. stop simulation");
+                simulationStarted = false;
+                break;
             }
         }
 
+    }
+
+    private List<Cell> findNeighbours(Position position, Map<Position, Cell> board) {
+        List<Cell> neighbours = new ArrayList<>();
+        neighbours.add(board.getOrDefault(new Position(position.getX() - 1, position.getY() + 1), new Cell(false, false, new Position(position.getX() - 1, position.getY() + 1))));
+        neighbours.add(board.getOrDefault(new Position(position.getX(), position.getY() + 1), new Cell(false, false, new Position(position.getX(), position.getY() + 1))));
+        neighbours.add(board.getOrDefault(new Position(position.getX() + 1, position.getY() + 1), new Cell(false, false, new Position(position.getX() + 1, position.getY() + 1))));
+        neighbours.add(board.getOrDefault(new Position(position.getX() - 1, position.getY()), new Cell(false, false, new Position(position.getX() - 1, position.getY()))));
+        neighbours.add(board.getOrDefault(new Position(position.getX() + 1, position.getY()), new Cell(false, false, new Position(position.getX() + 1, position.getY()))));
+        neighbours.add(board.getOrDefault(new Position(position.getX() - 1, position.getY() - 1), new Cell(false, false, new Position(position.getX() - 1, position.getY() - 1))));
+        neighbours.add(board.getOrDefault(new Position(position.getX(), position.getY() - 1), new Cell(false, false, new Position(position.getX(), position.getY() - 1))));
+        neighbours.add(board.getOrDefault(new Position(position.getX() + 1, position.getY() - 1), new Cell(false, false, new Position(position.getX() + 1, position.getY() - 1))));
+        return neighbours;
     }
 
     @Override
