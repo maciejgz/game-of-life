@@ -59,7 +59,7 @@ public class GolSimulationRunnerImpl implements GolSimulationRunner {
             }
             //clear board
             board.entrySet().removeIf(positionCellEntry -> !positionCellEntry.getValue().isStatus());
-            log.debug("simulation turn finished {} living cells", simulationTurn);
+            log.debug("simulation turn finished {} living cells", board.entrySet().stream().filter(cell -> cell.getValue().isStatus()).count());
             simulationTurn++;
             if (board.isEmpty()) {
                 log.debug("all cells are dead. stop simulation");
@@ -67,7 +67,6 @@ public class GolSimulationRunnerImpl implements GolSimulationRunner {
                 break;
             }
         }
-
     }
 
     private List<Cell> findNeighbours(Position position, Map<Position, Cell> board) {
