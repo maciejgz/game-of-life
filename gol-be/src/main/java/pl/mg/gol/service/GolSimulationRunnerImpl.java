@@ -50,7 +50,9 @@ public class GolSimulationRunnerImpl implements GolSimulationRunner {
                 //verify their neighbours
                 for (Cell neighbour : neighbours) {
                     List<Cell> secondLevelNeighbours = findNeighbours(neighbour.getPosition(), board);
-                    board.getOrDefault(neighbour.getPosition(), neighbour).calculateNextState(secondLevelNeighbours);
+                    Cell cell = board.getOrDefault(neighbour.getPosition(), neighbour);
+                    cell.calculateNextState(secondLevelNeighbours);
+                    board.put(neighbour.getPosition(), cell);
                 }
             }
             //propagate statuses to the living ones and remove dead cells

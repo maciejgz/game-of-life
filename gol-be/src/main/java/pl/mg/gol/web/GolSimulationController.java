@@ -1,13 +1,12 @@
 package pl.mg.gol.web;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import pl.mg.gol.service.GolSimulationRunner;
 import pl.mg.gol.service.SimulationAlreadyStartedException;
 import pl.mg.gol.service.SimulationAlreadyStoppedException;
+import pl.mg.gol.socket.PingMessage;
+import pl.mg.gol.socket.WebSocketService;
 
 import javax.validation.Valid;
 
@@ -15,10 +14,12 @@ import javax.validation.Valid;
 public class GolSimulationController {
     private final GolSimulationRunner runner;
     private final StartSimulationContextMapper mapper;
+    private final WebSocketService webSocketService;
 
-    public GolSimulationController(GolSimulationRunner runner, StartSimulationContextMapper mapper) {
+    public GolSimulationController(GolSimulationRunner runner, StartSimulationContextMapper mapper, WebSocketService webSocketService) {
         this.runner = runner;
         this.mapper = mapper;
+        this.webSocketService = webSocketService;
     }
 
     @PostMapping(value = "")
@@ -30,6 +31,12 @@ public class GolSimulationController {
     @DeleteMapping(value = "")
     public ResponseEntity<Void> startSimulation() throws SimulationAlreadyStoppedException {
         this.runner.stopSimulation();
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value = "")
+    public ResponseEntity<Void> sendPing() {
+        this.webSocketService.sendPingMessage(new PingMessage());
         return ResponseEntity.ok().build();
     }
 
